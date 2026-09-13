@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simurgh VPN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur p-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-red-600 flex items-center justify-center shadow-lg shadow-amber-500/20 font-bold text-xl text-black">
+                🦅
+            </div>
+            <h1 class="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+                Simurgh VPN
+            </h1>
+        </div>
+        <div id="authNav">
+            <button onclick="showSection('adminLoginSection')" class="text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                ورود ادمین
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container mx-auto p-4 max-w-lg flex-1 flex flex-col justify-center">
+
+        <!-- User Login Section -->
+        <section id="userLoginSection" class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
+            <h2 class="text-lg font-bold text-amber-400 text-center">ورود به پنل کاربری</h2>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">نام کاربری</label>
+                <input type="text" id="userUsername" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-slate-100 focus:border-amber-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">رمز عبور</label>
+                <input type="password" id="userPassword" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-slate-100 focus:border-amber-500 outline-none">
+            </div>
+            <button onclick="handleUserLogin()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-black font-bold py-2.5 rounded-xl transition shadow-lg shadow-amber-500/10">
+                ورود
+            </button>
+        </section>
+
+        <!-- User Dashboard Section -->
+        <section id="userDashboardSection" class="hidden space-y-4">
+            <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <span id="displayUsername" class="font-bold text-amber-400 text-lg"></span>
+                    <button onclick="logoutUser()" class="text-xs text-red-400 bg-red-950/30 px-2.5 py-1 rounded-lg border border-red-900/50">خروج</button>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="block text-slate-500 mb-1">حجم</span>
+                        <span id="userGb" class="font-bold text-slate-200"></span>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="block text-slate-500 mb-1">اعتبار</span>
+                        <span id="userDays" class="font-bold text-slate-200"></span>
+                    </div>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <span class="block text-slate-500 mb-1">کاربر</span>
+                        <span id="userCountDisplay" class="font-bold text-slate-200"></span>
+                    </div>
+                </div>
+
+                <!-- Config Conversion & Copy -->
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <label class="block text-xs text-slate-400">لینک اختصاصی Simurgh VPN</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="convertedConfig" readonly class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-amber-300 font-mono overflow-x-auto">
+                        <button onclick="copyConfig()" class="bg-amber-500 hover:bg-amber-600 text-black font-bold px-3 py-1 rounded-lg text-xs transition">کپی</button>
+                    </div>
+                </div>
+
+                <!-- QR Code & Ping -->
+                <div class="flex flex-col items-center justify-center p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+                    <div id="qrcode" class="p-2 bg-white rounded-lg"></div>
+                    <div class="flex items-center gap-2 text-xs mt-2">
+                        <span class="text-slate-400">تست پینگ:</span>
+                        <span id="pingResult" class="font-mono text-emerald-400">در حال محاسبه...</span>
+                    </div>
+                </div>
+
+                <!-- Change Password -->
+                <div class="pt-2 border-t border-slate-800">
+                    <details class="text-xs text-slate-400">
+                        <summary class="cursor-pointer hover:text-slate-200 mb-2">تغییر رمز عبور کاربر</summary>
+                        <div class="flex gap-2 mt-2">
+                            <input type="password" id="newUserPassInput" placeholder="رمز جدید" class="bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs w-full">
+                            <button onclick="changeUserPassword()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded-lg whitespace-nowrap">ثبت</button>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Login Section -->
+        <section id="adminLoginSection" class="hidden bg-slate-900/80 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
+            <h2 class="text-lg font-bold text-red-400 text-center">ورود به پنل مدیریت (ادمین)</h2>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">کد مخفی ادمین</label>
+                <input type="password" id="adminSecret" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-slate-100 focus:border-red-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">رمز عبور ادمین</label>
+                <input type="password" id="adminPassword" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-slate-100 focus:border-red-500 outline-none">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="handleAdminLogin()" class="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold py-2.5 rounded-xl transition shadow-lg shadow-red-500/10">
+                    ورود ادمین
+                </button>
+                <button onclick="showSection('userLoginSection')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 rounded-xl text-xs">
+                    بازگشت
+                </button>
+            </div>
+        </section>
+
+        <!-- Admin Dashboard Section -->
+        <section id="adminDashboardSection" class="hidden space-y-4">
+            <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <span class="font-bold text-red-400 text-lg">مدیریت کاربران</span>
+                    <button onclick="logoutAdmin()" class="text-xs text-red-400 bg-red-950/30 px-2.5 py-1 rounded-lg border border-red-900/50">خروج ادمین</button>
+                </div>
+
+                <!-- Create User Form -->
+                <div class="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <h3 class="text-xs font-bold text-slate-300">تعریف کاربر جدید</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="newUsername" placeholder="نام کاربری" class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs">
+                        <input type="text" id="newUserPassword" placeholder="رمز عبور" class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs">
+                    </div>
+                    <input type="text" id="newConfigLink" placeholder="لینک کانفیگ اصلی (vless/vmess/trojan)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs">
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="text" id="newGb" placeholder="حجم (۵۰ گیگ)" class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs">
+                        <input type="text" id="newDays" placeholder="زمان (۳۰ روز)" class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs">
+                        <input type="text" id="newUserCount" placeholder="تعداد کاربر (۲)" class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs">
+                    </div>
+                    <button onclick="createUser()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded-lg transition">ساخت کاربر</button>
+                </div>
+
+                <!-- Users List -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold text-slate-400">لیست کاربران</h3>
+                    <div id="adminUsersList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                </div>
+
+                <!-- Admin Settings -->
+                <div class="pt-2 border-t border-slate-800">
+                    <details class="text-xs text-slate-400">
+                        <summary class="cursor-pointer hover:text-slate-200 mb-2">تغییر اطلاعات ادمین</summary>
+                        <div class="space-y-2 mt-2">
+                            <input type="text" id="updateSecretCode" placeholder="کد مخفی جدید" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs">
+                            <input type="password" id="updateAdminPassword" placeholder="رمز عبور جدید ادمین" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs">
+                            <button onclick="updateAdminCredentials()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded-lg">اعمال تغییرات</button>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-4 text-center text-xs text-slate-600 border-t border-slate-900">
+        Simurgh VPN Management System
+    </footer>
+
+    <script>
+        let currentUser = null;
+
+        function showSection(sectionId) {
+            ['userLoginSection', 'userDashboardSection', 'adminLoginSection', 'adminDashboardSection'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // تبدیل نام کانفیگ به Simurgh VPN
+        function convertToSimurghConfig(rawLink, username) {
+            if (!rawLink) return '';
+            try {
+                if (rawLink.includes('#')) {
+                    const base = rawLink.split('#')[0];
+                    return `${base}#Simurgh%20VPN%20-%20${encodeURIComponent(username)}`;
+                }
+                return `${rawLink}#Simurgh%20VPN%20-%20${encodeURIComponent(username)}`;
+            } catch (e) {
+                return rawLink;
+            }
+        }
+
+        // کاربر
+        async function handleUserLogin() {
+            const username = document.getElementById('userUsername').value;
+            const password = document.getElementById('userPassword').value;
+
+            const res = await fetch('/api/user/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                currentUser = data.user;
+                setupUserDashboard();
+                showSection('userDashboardSection');
+            } else {
+                alert(data.error);
+            }
+        }
+
+        function setupUserDashboard() {
+            document.getElementById('displayUsername').innerText = currentUser.username;
+            document.getElementById('userGb').innerText = currentUser.gb;
+            document.getElementById('userDays').innerText = currentUser.days;
+            document.getElementById('userCountDisplay').innerText = currentUser.userCount;
+
+            const simurghConfig = convertToSimurghConfig(currentUser.configLink, currentUser.username);
+            document.getElementById('convertedConfig').value = simurghConfig;
+
+            // ساخت QR Code
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById('qrcode'), {
+                text: simurghConfig,
+                width: 128,
+                height: 128
+            });
+
+            // تست پینگ ساختگی
+            simulatePing();
+        }
+
+        function simulatePing() {
+            const pingEl = document.getElementById('pingResult');
+            pingEl.innerText = "در حال تست...";
+            setTimeout(() => {
+                const randomPing = Math.floor(Math.random() * (120 - 45 + 1)) + 45;
+                pingEl.innerText = `${randomPing} ms`;
+            }, 1000);
+        }
+
+        function copyConfig() {
+            const input = document.getElementById('convertedConfig');
+            input.select();
+            document.execCommand('copy');
+            alert('لینک کانفیگ با موفقیت کپی شد!');
+        }
+
+        async function changeUserPassword() {
+            const newPassword = document.getElementById('newUserPassInput').value;
+            if (!newPassword) return alert('رمز جدید را وارد کنید');
+
+            const res = await fetch('/api/user/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser.username, newPassword })
+            });
+
+            if (res.ok) {
+                alert('رمز عبور با موفقیت تغییر کرد.');
+                document.getElementById('newUserPassInput').value = '';
+            }
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            showSection('userLoginSection');
+        }
+
+        // ادمین
+        async function handleAdminLogin() {
+            const secretCode = document.getElementById('adminSecret').value;
+            const password = document.getElementById('adminPassword').value;
+
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ secretCode, password })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                loadAdminUsers();
+                showSection('adminDashboardSection');
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function loadAdminUsers() {
+            const res = await fetch('/api/admin/users');
+            const users = await res.json();
+            const listEl = document.getElementById('adminUsersList');
+            listEl.innerHTML = '';
+
+            users.forEach(u => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-xs";
+                item.innerHTML = `
+                    <div>
+                        <span class="font-bold ${u.isLocked ? 'text-red-400 line-through' : 'text-slate-200'}">${u.username}</span>
+                        <span class="text-slate-500 text-[10px] block">${u.gb} | ${u.days}</span>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="toggleLockUser('${u.id}')" class="px-2 py-1 rounded bg-slate-800 text-amber-400">${u.isLocked ? 'بازکردن' : 'قفل'}</button>
+                        <button onclick="deleteUser('${u.id}')" class="px-2 py-1 rounded bg-red-950 text-red-400">حذف</button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        async function createUser() {
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newUserPassword').value;
+            const configLink = document.getElementById('newConfigLink').value;
+            const gb = document.getElementById('newGb').value;
+            const days = document.getElementById('newDays').value;
+            const userCount = document.getElementById('newUserCount').value;
+
+            const res = await fetch('/api/admin/create-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, configLink, gb, days, userCount })
+            });
+
+            if (res.ok) {
+                loadAdminUsers();
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newUserPassword').value = '';
+                document.getElementById('newConfigLink').value = '';
+            } else {
+                const data = await res.json();
+                alert(data.error);
+            }
+        }
+
+        async function toggleLockUser(userId) {
+            await fetch('/api/admin/user-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, action: 'toggleLock' })
+            });
+            loadAdminUsers();
+        }
+
+        async function deleteUser(userId) {
+            if (confirm('آیا از حذف این کاربر اطمینان دارید؟')) {
+                await fetch('/api/admin/user-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, action: 'delete' })
+                });
+                loadAdminUsers();
+            }
+        }
+
+        async function updateAdminCredentials() {
+            const newSecretCode = document.getElementById('updateSecretCode').value;
+            const newPassword = document.getElementById('updateAdminPassword').value;
+
+            const res = await fetch('/api/admin/update-credentials', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newSecretCode, newPassword })
+            });
+
+            if (res.ok) {
+                alert('اطلاعات ادمین با موفقیت بروزرسانی شد.');
+            }
+        }
+
+        async function logoutAdmin() {
+            await fetch('/api/admin/logout', { method: 'POST' });
+            showSection('userLoginSection');
+        }
+    </script>
+</body>
+</html>
